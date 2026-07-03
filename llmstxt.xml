@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="plugin" group="task" method="upgrade">
+	<name>PLG_TASK_LLMSTXT</name>
+	<author>Jeroen Moolenschot | Joomill</author>
+	<creationDate>2026-07</creationDate>
+	<copyright>(C) 2026 Joomill. All rights reserved.</copyright>
+	<license>GNU General Public License version 2 or later; see LICENSE.txt</license>
+	<authorEmail>info@joomill.nl</authorEmail>
+	<authorUrl>https://www.joomill-extensions.com</authorUrl>
+	<version>1.0.0</version>
+	<description>PLG_TASK_LLMSTXT_XML_DESCRIPTION</description>
+	<namespace path="src">Joomill\Plugin\Task\Llmstxt</namespace>
+
+	<files>
+		<folder plugin="llmstxt">services</folder>
+		<folder>src</folder>
+		<folder>forms</folder>
+	</files>
+
+	<languages folder="language">
+		<language tag="en-GB">en-GB/plg_task_llmstxt.ini</language>
+		<language tag="en-GB">en-GB/plg_task_llmstxt.sys.ini</language>
+		<language tag="nl-NL">nl-NL/plg_task_llmstxt.ini</language>
+		<language tag="nl-NL">nl-NL/plg_task_llmstxt.sys.ini</language>
+	</languages>
+</extension>

@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form>
+	<fields name="params">
+		<fieldset name="llmstxt_general" label="PLG_TASK_LLMSTXT_FIELDSET_GENERAL_LABEL">
+
+			<field
+				name="base_url"
+				type="url"
+				label="PLG_TASK_LLMSTXT_BASE_URL_LABEL"
+				description="PLG_TASK_LLMSTXT_BASE_URL_DESC"
+				filter="url"
+				hint="https://www.example.com"
+			/>
+
+			<field
+				name="output_file"
+				type="text"
+				label="PLG_TASK_LLMSTXT_OUTPUT_FILE_LABEL"
+				description="PLG_TASK_LLMSTXT_OUTPUT_FILE_DESC"
+				default="llms.txt"
+				filter="cmd"
+			/>
+
+			<field
+				name="site_title"
+				type="text"
+				label="PLG_TASK_LLMSTXT_SITE_TITLE_LABEL"
+				description="PLG_TASK_LLMSTXT_SITE_TITLE_DESC"
+				maxlength="255"
+			/>
+
+			<field
+				name="summary"
+				type="textarea"
+				label="PLG_TASK_LLMSTXT_SUMMARY_LABEL"
+				description="PLG_TASK_LLMSTXT_SUMMARY_DESC"
+				rows="3"
+				filter="string"
+			/>
+
+			<field
+				name="intro"
+				type="textarea"
+				label="PLG_TASK_LLMSTXT_INTRO_LABEL"
+				description="PLG_TASK_LLMSTXT_INTRO_DESC"
+				rows="4"
+				filter="string"
+			/>
+
+			<field
+				name="sections"
+				type="subform"
+				label="PLG_TASK_LLMSTXT_SECTIONS_LABEL"
+				description="PLG_TASK_LLMSTXT_SECTIONS_DESC"
+				multiple="true"
+				layout="joomla.form.field.subform.repeatable-table"
+				icon="list"
+			>
+				<form>
+					<field
+						name="heading"
+						type="text"
+						label="PLG_TASK_LLMSTXT_SECTION_HEADING_LABEL"
+						filter="string"
+					/>
+
+					<field
+						name="source"
+						type="list"
+						label="PLG_TASK_LLMSTXT_SECTION_SOURCE_LABEL"
+						default="menu"
+					>
+						<option value="menu">PLG_TASK_LLMSTXT_SECTION_SOURCE_MENU</option>
+						<option value="category">PLG_TASK_LLMSTXT_SECTION_SOURCE_CATEGORY</option>
+					</field>
+
+					<field
+						name="menutype"
+						type="menutype"
+						addfieldprefix="Joomill\Plugin\Task\Llmstxt\Field"
+						label="PLG_TASK_LLMSTXT_SECTION_MENUTYPE_LABEL"
+						showon="source:menu"
+					/>
+
+					<field
+						name="categories"
+						type="category"
+						extension="com_content"
+						multiple="true"
+						label="PLG_TASK_LLMSTXT_SECTION_CATEGORIES_LABEL"
+						showon="source:category"
+					/>
+
+					<field
+						name="description_source"
+						type="list"
+						label="PLG_TASK_LLMSTXT_SECTION_DESCSRC_LABEL"
+						default="auto"
+					>
+						<option value="auto">PLG_TASK_LLMSTXT_SECTION_DESCSRC_AUTO</option>
+						<option value="metadesc">PLG_TASK_LLMSTXT_SECTION_DESCSRC_METADESC</option>
+						<option value="introtext">PLG_TASK_LLMSTXT_SECTION_DESCSRC_INTROTEXT</option>
+						<option value="none">PLG_TASK_LLMSTXT_SECTION_DESCSRC_NONE</option>
+					</field>
+
+					<field
+						name="limit"
+						type="number"
+						label="PLG_TASK_LLMSTXT_SECTION_LIMIT_LABEL"
+						default="50"
+						min="0"
+						step="1"
+					/>
+
+					<field
+						name="ordering"
+						type="list"
+						label="PLG_TASK_LLMSTXT_SECTION_ORDERING_LABEL"
+						default="created_desc"
+						showon="source:category"
+					>
+						<option value="created_desc">PLG_TASK_LLMSTXT_SECTION_ORDERING_CREATED_DESC</option>
+						<option value="ordering_asc">PLG_TASK_LLMSTXT_SECTION_ORDERING_ORDERING_ASC</option>
+						<option value="title_asc">PLG_TASK_LLMSTXT_SECTION_ORDERING_TITLE_ASC</option>
+					</field>
+				</form>
+			</field>
+
+		</fieldset>
+	</fields>
+</form>
