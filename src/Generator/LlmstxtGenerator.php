@@ -3,8 +3,8 @@
  * @package     Joomla.Plugin
  * @subpackage  Task.Llmstxt
  *
- * @copyright   (C) 2026 Joomill. All rights reserved.
- * @license     GNU General Public License version 2 or later; see LICENSE.txt
+ * @copyright   (C) 2026 Joomill Extensions
+ * @license     GNU General Public License version 3 or later
  */
 
 namespace Joomill\Plugin\Task\Llmstxt\Generator;
@@ -17,6 +17,7 @@ use Joomla\CMS\Router\Route;
 use Joomla\CMS\Uri\Uri;
 use Joomla\Component\Content\Site\Helper\RouteHelper;
 use Joomla\Database\DatabaseInterface;
+use Joomla\Database\ParameterType;
 use Joomla\Registry\Registry;
 
 /**
@@ -46,6 +47,20 @@ class LlmstxtGenerator
 	private string $baseUrl;
 
 	/**
+	 * Whether to strip the SEF language code from generated URLs.
+	 *
+	 * @var  boolean
+	 */
+	private bool $stripLang = false;
+
+	/**
+	 * SEF language codes (e.g. en, nl) of the published site languages.
+	 *
+	 * @var  string[]
+	 */
+	private array $langCodes = [];
+
+	/**
 	 * Constructor.
 	 *
 	 * @param   DatabaseInterface  $db       The database driver.
@@ -69,6 +84,9 @@ class LlmstxtGenerator
 	 */
 	public function build(object $params): string
 	{
+		$this->stripLang = (int) ($params->remove_language_code ?? 0) === 1;
+		$this->langCodes = $this->stripLang ? $this->loadLanguageCodes() : [];
+
 		$out = [];
 
 		$title = $this->oneLine((string) ($params->site_title ?? ''));
@@ -96,9 +114,19 @@ class LlmstxtGenerator
 
 		foreach ((array) ($params->sections ?? []) as $section) {
 			$section = (object) $section;
-			$lines   = ($section->source ?? 'menu') === 'category'
-				? $this->buildCategoryLines($section)
-				: $this->buildMenuLines($section);
+
+			switch ($section->source ?? 'menu') {
+				case 'category':
+					$lines = $this->buildCategoryLines($section);
+					break;
+
+				case 'articles':
+					$lines = $this->buildArticleLines($section);
+					break;
+
+				default:
+					$lines = $this->buildMenuLines($section);
+			}
 
 			if (empty($lines)) {
 				continue;
@@ -133,18 +161,27 @@ class LlmstxtGenerator
 			return [];
 		}
 
-		$limit      = (int) ($section->limit ?? 50);
-		$descSource = (string) ($section->description_source ?? 'auto');
+		$limit          = (int) ($section->limit ?? 50);
+		$descSource     = (string) ($section->description_source ?? 'auto');
+		$include        = $this->intList($section->menu_include ?? []);
+		$exclude        = $this->intList($section->menu_exclude ?? []);
+		$includeSubmenu = (int) ($section->include_submenu ?? 1) === 1;
+		$language       = trim((string) ($section->language ?? ''));
 
 		$db    = $this->db;
 		$query = $db->getQuery(true)
-			->select($db->quoteName(['id', 'title', 'path', 'link', 'type', 'access', 'params', 'home']))
+			->select($db->quoteName(['id', 'title', 'path', 'link', 'type', 'access', 'params', 'home', 'level']))
 			->from($db->quoteName('#__menu'))
 			->where($db->quoteName('menutype') . ' = :menutype')
 			->where($db->quoteName('published') . ' = 1')
 			->where($db->quoteName('client_id') . ' = 0')
 			->bind(':menutype', $menutype)
 			->order($db->quoteName('lft') . ' ASC');
+
+		// Optional language filter (language-neutral items are always kept).
+		if ($language !== '') {
+			$query->whereIn($db->quoteName('language'), [$language, '*'], ParameterType::STRING);
+		}
 
 		$db->setQuery($query);
 		$items = $db->loadObjectList() ?: [];
@@ -155,6 +192,23 @@ class LlmstxtGenerator
 		foreach ($items as $item) {
 			if ($limit > 0 && $count >= $limit) {
 				break;
+			}
+
+			$id = (int) $item->id;
+
+			if (!empty($include)) {
+				// Allowlist set: keep only the selected items (explicit choice wins).
+				if (!\in_array($id, $include, true)) {
+					continue;
+				}
+			} elseif (!$includeSubmenu && (int) $item->level > 1) {
+				// No allowlist: optionally keep only top-level items.
+				continue;
+			}
+
+			// Blocklist: always drop excluded items.
+			if (\in_array($id, $exclude, true)) {
+				continue;
 			}
 
 			if (!\in_array((int) $item->access, $this->viewLevels, true)) {
@@ -194,22 +248,80 @@ class LlmstxtGenerator
 	 */
 	private function buildCategoryLines(object $section): array
 	{
-		$cats = array_values(array_filter(array_map('intval', (array) ($section->categories ?? []))));
+		$cats = $this->intList($section->categories ?? []);
 
 		if (empty($cats)) {
 			return [];
 		}
 
+		if ((int) ($section->include_subcategories ?? 0) === 1) {
+			$cats = $this->expandCategories($cats);
+		}
+
+		return $this->buildContentLines($section, $cats);
+	}
+
+	/**
+	 * Build link lines from all published articles (no category restriction).
+	 *
+	 * @param   object  $section  The section config.
+	 *
+	 * @return  string[]
+	 */
+	private function buildArticleLines(object $section): array
+	{
+		return $this->buildContentLines($section, []);
+	}
+
+	/**
+	 * Build link lines from content articles, optionally restricted to categories.
+	 *
+	 * @param   object  $section  The section config.
+	 * @param   int[]   $cats     Category ids to restrict to, or empty for all.
+	 *
+	 * @return  string[]
+	 */
+	private function buildContentLines(object $section, array $cats): array
+	{
 		$limit      = (int) ($section->limit ?? 50);
 		$descSource = (string) ($section->description_source ?? 'auto');
 		$ordering   = (string) ($section->ordering ?? 'created_desc');
+		$language   = trim((string) ($section->language ?? ''));
+		$include    = $this->intList($section->article_include ?? []);
+		$exclude    = $this->intList($section->article_exclude ?? []);
+		$maxAge     = (int) ($section->max_age ?? 0);
 
 		$db    = $this->db;
 		$query = $db->getQuery(true)
 			->select($db->quoteName(['id', 'title', 'alias', 'introtext', 'metadesc', 'catid', 'language', 'access']))
 			->from($db->quoteName('#__content'))
-			->whereIn($db->quoteName('catid'), $cats)
 			->where($db->quoteName('state') . ' = 1');
+
+		if (!empty($cats)) {
+			$query->whereIn($db->quoteName('catid'), $cats);
+		}
+
+		// Allowlist / blocklist of specific articles.
+		if (!empty($include)) {
+			$query->whereIn($db->quoteName('id'), $include);
+		}
+
+		if (!empty($exclude)) {
+			$query->whereNotIn($db->quoteName('id'), $exclude);
+		}
+
+		// Optional maximum age: only articles published within the last N days (0 = no limit).
+		if ($maxAge > 0) {
+			$threshold = Factory::getDate('now', 'UTC')->sub(new \DateInterval('P' . $maxAge . 'D'))->toSql();
+			$query->where(
+				'COALESCE(' . $db->quoteName('publish_up') . ', ' . $db->quoteName('created') . ') >= ' . $db->quote($threshold)
+			);
+		}
+
+		// Optional language filter (language-neutral items are always kept).
+		if ($language !== '') {
+			$query->whereIn($db->quoteName('language'), [$language, '*'], ParameterType::STRING);
+		}
 
 		switch ($ordering) {
 			case 'ordering_asc':
@@ -253,6 +365,61 @@ class LlmstxtGenerator
 	}
 
 	/**
+	 * Normalise a form value (array or scalar) to a list of positive integers.
+	 *
+	 * @param   mixed  $value  The raw value.
+	 *
+	 * @return  int[]
+	 */
+	private function intList($value): array
+	{
+		return array_values(array_filter(array_map('intval', (array) $value)));
+	}
+
+	/**
+	 * Expand a set of content categories with all their published descendants.
+	 *
+	 * Uses the nested-set (lft/rgt) bounds of the selected categories.
+	 *
+	 * @param   int[]  $cats  The selected category ids.
+	 *
+	 * @return  int[]
+	 */
+	private function expandCategories(array $cats): array
+	{
+		if (empty($cats)) {
+			return $cats;
+		}
+
+		$db    = $this->db;
+		$query = $db->getQuery(true)
+			->select($db->quoteName(['lft', 'rgt']))
+			->from($db->quoteName('#__categories'))
+			->whereIn($db->quoteName('id'), $cats)
+			->where($db->quoteName('extension') . ' = ' . $db->quote('com_content'));
+
+		$db->setQuery($query);
+		$bounds = $db->loadObjectList() ?: [];
+
+		$all = $cats;
+
+		foreach ($bounds as $bound) {
+			$sub = $db->getQuery(true)
+				->select($db->quoteName('id'))
+				->from($db->quoteName('#__categories'))
+				->where($db->quoteName('extension') . ' = ' . $db->quote('com_content'))
+				->where($db->quoteName('published') . ' = 1')
+				->where($db->quoteName('lft') . ' > ' . (int) $bound->lft)
+				->where($db->quoteName('rgt') . ' < ' . (int) $bound->rgt);
+
+			$db->setQuery($sub);
+			$all = array_merge($all, array_map('intval', $db->loadColumn() ?: []));
+		}
+
+		return array_values(array_unique($all));
+	}
+
+	/**
 	 * Build the canonical SEF URL for a menu item.
 	 *
 	 * @param   object  $item  The menu item row.
@@ -277,7 +444,7 @@ class LlmstxtGenerator
 			$url = $this->baseUrl . '/' . ltrim((string) $item->path, '/');
 		}
 
-		return $this->normaliseHost($url);
+		return $this->stripLanguageCode($this->normaliseHost($url));
 	}
 
 	/**
@@ -301,7 +468,7 @@ class LlmstxtGenerator
 			$url = '';
 		}
 
-		return $this->normaliseHost($url);
+		return $this->stripLanguageCode($this->normaliseHost($url));
 	}
 
 	/**
@@ -391,6 +558,59 @@ class LlmstxtGenerator
 		}
 
 		return $url;
+	}
+
+	/**
+	 * Remove the SEF language code (e.g. /en) from the start of an internal URL.
+	 *
+	 * Only the first path segment right after the site root is removed, and only
+	 * when it matches a published language's SEF code. External links are untouched.
+	 *
+	 * @param   string  $url  The absolute URL.
+	 *
+	 * @return  string
+	 */
+	private function stripLanguageCode(string $url): string
+	{
+		if (!$this->stripLang || $url === '' || empty($this->langCodes)) {
+			return $url;
+		}
+
+		$root = $this->baseUrl !== '' ? $this->baseUrl : rtrim(Uri::root(), '/');
+
+		if ($root === '' || strpos($url, $root) !== 0) {
+			return $url;
+		}
+
+		$rest = substr($url, \strlen($root));
+
+		foreach ($this->langCodes as $sef) {
+			$prefix = '/' . $sef;
+
+			if ($rest === $prefix || strpos($rest, $prefix . '/') === 0) {
+				return $root . substr($rest, \strlen($prefix));
+			}
+		}
+
+		return $url;
+	}
+
+	/**
+	 * Load the SEF codes of the published site languages.
+	 *
+	 * @return  string[]
+	 */
+	private function loadLanguageCodes(): array
+	{
+		$db    = $this->db;
+		$query = $db->getQuery(true)
+			->select($db->quoteName('sef'))
+			->from($db->quoteName('#__languages'))
+			->where($db->quoteName('published') . ' = 1');
+
+		$db->setQuery($query);
+
+		return array_values(array_filter(array_map('strval', $db->loadColumn() ?: [])));
 	}
 
 	/**

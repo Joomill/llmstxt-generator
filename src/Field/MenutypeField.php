@@ -3,8 +3,8 @@
  * @package     Joomla.Plugin
  * @subpackage  Task.Llmstxt
  *
- * @copyright   (C) 2026 Joomill. All rights reserved.
- * @license     GNU General Public License version 2 or later; see LICENSE.txt
+ * @copyright   (C) 2026 Joomill Extensions
+ * @license     GNU General Public License version 3 or later
  */
 
 namespace Joomill\Plugin\Task\Llmstxt\Field;
