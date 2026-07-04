@@ -29,4 +29,14 @@
 
 	<!-- Help button URL -->
 	<help key="" url="PLG_TASK_LLMSTXT_HELP_URL" />
+
+	<!-- Changelog -->
+	<changelogurl>
+		<![CDATA[https://www.joomill-extensions.com/index.php?option=com_ochsubscriptions&amp;view=changelog&amp;format=xml&amp;cat=37]]></changelogurl>
+
+	<!-- Updateserver -->
+	<updateservers>
+		<server type="extension" priority="1" name="Joomill LLMs.txt Generator plugin">
+			<![CDATA[https://www.joomill-extensions.com/index.php?option=com_ochsubscriptions&amp;view=updater&amp;format=xml&amp;cat=37]]></server>
+	</updateservers>
 </extension>

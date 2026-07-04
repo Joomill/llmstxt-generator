@@ -29,8 +29,8 @@
 				description="PLG_TASK_LLMSTXT_REMOVE_LANGUAGE_CODE_DESC"
 				default="0"
 			>
-				<option value="1">JYES</option>
 				<option value="0">JNO</option>
+				<option value="1">JYES</option>
 			</field>
 
 			<field
@@ -124,8 +124,8 @@
 						default="1"
 						showon="source:menu"
 					>
-						<option value="1">JYES</option>
 						<option value="0">JNO</option>
+						<option value="1">JYES</option>
 					</field>
 
 					<field
@@ -147,8 +147,8 @@
 						default="0"
 						showon="source:category"
 					>
-						<option value="1">JYES</option>
 						<option value="0">JNO</option>
+						<option value="1">JYES</option>
 					</field>
 
 					<field
@@ -232,6 +232,13 @@
 					</field>
 				</form>
 			</field>
+
+			<!-- Cross-sell: Joomill Markdown plugin -->
+			<field
+				name="markdownpromo"
+				type="note"
+				description="PLG_TASK_LLMSTXT_MARKDOWNPROMO_DESC"
+			/>
 
 		</fieldset>
 	</fields>
