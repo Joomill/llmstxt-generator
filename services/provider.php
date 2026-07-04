@@ -27,17 +27,24 @@ return new class () implements ServiceProviderInterface {
 	 */
 	public function register(Container $container): void
 	{
+		$pluginFactory = function (Container $container) {
+			$plugin = new Llmstxt(
+				$container->get(DispatcherInterface::class),
+				(array) PluginHelper::getPlugin('task', 'llmstxt')
+			);
+			$plugin->setApplication(Factory::getApplication());
+
+			return $plugin;
+		};
+
+		// Lazy loading (Joomla 6.1+ with PHP 8.4+): the plugin class is only
+		// instantiated when one of its subscribed events is dispatched.
+		// Container::lazy() does not exist on Joomla 5, hence the guard.
 		$container->set(
 			PluginInterface::class,
-			function (Container $container) {
-				$plugin = new Llmstxt(
-					$container->get(DispatcherInterface::class),
-					(array) PluginHelper::getPlugin('task', 'llmstxt')
-				);
-				$plugin->setApplication(Factory::getApplication());
-
-				return $plugin;
-			}
+			method_exists($container, 'lazy')
+				? $container->lazy(Llmstxt::class, $pluginFactory)
+				: $pluginFactory
 		);
 	}
 };
