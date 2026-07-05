@@ -232,7 +232,7 @@ class PlgTaskLlmstxtInstallerScript implements InstallerScriptInterface
                         ],
                     ],
                 ],
-                'priority'        => 1,
+                'priority'        => 0,
             ];
 
             $model->save($data);
