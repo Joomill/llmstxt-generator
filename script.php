@@ -1,6 +1,6 @@
 <?php
 /*
- *  package: Joomill LLMs.txt Generator plugin
+ *  package: Joomla LLMs.txt Generator
  *  copyright: Copyright (c) 2026. Jeroen Moolenschot | Joomill
  *  license: GNU General Public License version 3 or later
  *  link: https://www.joomill-extensions.com

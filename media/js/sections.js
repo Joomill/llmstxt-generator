@@ -1,13 +1,8 @@
-/**
- * LLMs.txt Generator - section form helper.
- *
- * In each menu section row, the "Only these items" and "Exclude items" fancy-selects
- * are filtered to show only the menu items of the menu (menutype) chosen in that same
- * row. The full item list ships as JSON on the <joomla-field-fancy-select> element;
- * filtering is done through the choices.js instance the web component exposes.
- *
- * @copyright   (C) 2026 Joomill Extensions
- * @license     GNU General Public License version 3 or later
+/*
+ *  package: Joomla LLMs.txt Generator
+ *  copyright: Copyright (c) 2026. Jeroen Moolenschot | Joomill
+ *  license: GNU General Public License version 3 or later
+ *  link: https://www.joomill-extensions.com
  */
 (function () {
 	'use strict';

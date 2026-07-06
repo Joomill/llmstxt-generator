@@ -1,10 +1,9 @@
 <?php
-/**
- * @package     Joomla.Plugin
- * @subpackage  Task.Llmstxt
- *
- * @copyright   (C) 2026 Joomill Extensions
- * @license     GNU General Public License version 3 or later
+/*
+ *  package: Joomla LLMs.txt Generator
+ *  copyright: Copyright (c) 2026. Jeroen Moolenschot | Joomill
+ *  license: GNU General Public License version 3 or later
+ *  link: https://www.joomill-extensions.com
  */
 
 defined('_JEXEC') or die;
