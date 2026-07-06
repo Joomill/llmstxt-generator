@@ -1,11 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--
-  ~  package: Joomla LLMs.txt Generator
-  ~  copyright: Copyright (c) 2026. Jeroen Moolenschot | Joomill
-  ~  license: GNU General Public License version 3 or later
-  ~  link: https://www.joomill-extensions.com
-  -->
-
 <form>
 	<fields name="params">
 		<fieldset name="llmstxt_general" label="PLG_TASK_LLMSTXT_FIELDSET_GENERAL_LABEL">
