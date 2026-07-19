@@ -1,3 +1,8 @@
 <component name="CopyrightManager">
-  <settings default="Joomill" />
+  <settings default="Joomill">
+    <LanguageOptions name="PHP">
+      <option name="fileTypeOverride" value="3" />
+      <option name="useAlternate" value="true" />
+    </LanguageOptions>
+  </settings>
 </component>
